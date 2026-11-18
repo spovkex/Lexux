@@ -1,0 +1,504 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLICKXING</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090d18;color:#f3f5ff;font-family:Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+header{height:75px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;background:#11182a;border-bottom:1px solid #27324c;position:sticky;top:0;z-index:5}
+.logo{font-size:25px;font-weight:1000;letter-spacing:2px;color:#69c7ff}
+.header-right{display:flex;gap:10px}
+.container{max-width:1150px;margin:30px auto;padding:0 18px}
+.card{background:#121b2e;border:1px solid #283653;border-radius:17px;padding:22px;margin-bottom:20px}
+h1,h2,h3{margin-top:0}
+h1{font-size:27px}
+.muted{color:#9ba9c5}
+button.primary{background:#368ce9;color:white;padding:11px 18px;border-radius:10px;font-weight:bold}
+button.secondary{background:#253653;color:white;padding:11px 18px;border-radius:10px;font-weight:bold}
+button.danger{background:#74394b;color:white;padding:10px 15px;border-radius:10px}
+button:disabled{opacity:.4;cursor:not-allowed}
+input{width:100%;padding:13px;border-radius:9px;border:1px solid #354563;background:#0b1323;color:white;margin:7px 0 14px}
+.auth{max-width:420px;margin:55px auto}
+.auth button{width:100%;margin-top:8px}
+.hidden{display:none!important}
+.title-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:13px 10px;border-bottom:1px solid #293650}
+th{color:#8ea5c9;font-size:12px;text-transform:uppercase}
+td{font-size:14px}
+.rank{font-weight:900}
+.rank-unranked{color:#aab1c0}
+.rank-iron{color:#c5cbd3}
+.rank-gold{color:#ffd35a}
+.rank-emerald{color:#50e0a0}
+.rank-diamond{color:#65d9ff}
+.rank-netherite{color:#c08cff}
+.rank-semi{color:#ff9a75}
+.rank-royale{color:#ffdf71;text-shadow:0 0 10px #e5a82b}
+#leaderboard{overflow-x:auto}
+#clickButton{width:min(330px,80vw);height:min(330px,80vw);border-radius:50%;font-size:35px;font-weight:1000;color:white;background:radial-gradient(circle at 35% 25%,#69d4ff,#2466cf 65%,#173d91);box-shadow:0 0 35px #268eff55,inset 0 -12px 20px #102d70;transition:.08s}
+#clickButton:active{transform:scale(.94)}
+.click-area{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:25px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat{background:#0b1425;border:1px solid #273957;padding:15px;border-radius:12px}
+.stat small{color:#93a5c4}
+.stat strong{display:block;font-size:23px;margin-top:7px}
+.game-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}
+.upgrade-box{background:#0b1425;border:1px solid #273957;border-radius:13px;padding:17px;margin:10px 0}
+.bar{height:9px;background:#293650;border-radius:20px;overflow:hidden;margin-top:10px}
+.bar div{height:100%;background:#59baff;width:0%}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#263b5e;padding:13px 20px;border-radius:12px;display:none;z-index:10}
+@media(max-width:750px){.game-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}header{padding:0 15px}.logo{font-size:19px}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">⚡ CLICKXING</div>
+<div class="header-right">
+<button class="secondary" id="loginHeader" onclick="showAuth('login')">Login</button>
+<button class="primary" id="createHeader" onclick="showAuth('create')">Create</button>
+<button class="secondary hidden" id="logoutHeader" onclick="logout()">Logout</button>
+</div>
+</header>
+
+<!-- HALAMAN UTAMA / LEADERBOARD -->
+<main class="container" id="homePage">
+<div class="card">
+<div class="title-row">
+<div>
+<h1>🏆 CLICKXING LEADERBOARD</h1>
+<p class="muted">Top 50 Clickers — compete to become Royale!</p>
+</div>
+<div class="muted" id="refreshText">Refresh setiap 3 jam</div>
+</div>
+<div id="leaderboard">
+<table>
+<thead><tr><th>#</th><th>Player</th><th>Rank</th><th>Total Click</th></tr></thead>
+<tbody id="leaderRows"></tbody>
+</table>
+</div>
+</div>
+<div class="card title-row">
+<div>
+<h2>Ready to become the best?</h2>
+<p class="muted">Login atau buat akun untuk mulai mengumpulkan click.</p>
+</div>
+<button class="primary" onclick="showAuth('create')">Create Account →</button>
+</div>
+</main>
+
+<!-- LOGIN / CREATE -->
+<section class="container hidden" id="authPage">
+<div class="card auth">
+<h1 id="authTitle">Create Account</h1>
+<p class="muted" id="authDescription">Buat akun CLICKXING kamu.</p>
+<label>Username</label>
+<input id="usernameInput" maxlength="18" placeholder="Masukkan username">
+<label>Password</label>
+<input id="passwordInput" type="password" placeholder="Masukkan password">
+<button class="primary" id="authSubmit" onclick="submitAuth()">Create Account</button>
+<button class="secondary" onclick="goHome()">Kembali ke leaderboard</button>
+<p class="muted" style="font-size:12px;margin-top:15px">Akun demo tersimpan di browser ini. Jangan gunakan password penting atau password yang sama dengan akun lain.</p>
+</div>
+</section>
+
+<!-- GAME -->
+<section class="container hidden" id="gamePage">
+<div class="title-row">
+<div>
+<h1>Welcome, <span id="playerName">Player</span>!</h1>
+<p class="muted">Keep clicking and climb the ranks.</p>
+</div>
+<button class="secondary" onclick="goHome()">Leaderboard</button>
+</div>
+
+<div class="stats">
+<div class="stat"><small>TOTAL CLICKS</small><strong id="totalClicks">0</strong></div>
+<div class="stat"><small>MAINCOIN</small><strong id="coins">0</strong></div>
+<div class="stat"><small>CURRENT RANK</small><strong id="currentRank" class="rank">Unranked</strong></div>
+</div>
+
+<div class="game-grid" style="margin-top:18px">
+<div class="card click-area">
+<h2>CLICK TO EARN!</h2>
+<p class="muted">Setiap klik menghasilkan <b id="clickPower">1</b> click.</p>
+<button id="clickButton" onclick="manualClick()">CLICK!</button>
+<p id="clickMessage" class="muted">Let's go!</p>
+</div>
+
+<div class="card">
+<h2>⚙️ Upgrades</h2>
+<div class="upgrade-box">
+<h3>Multiple Click</h3>
+<p class="muted">Tingkatkan jumlah click setiap kali menekan tombol.</p>
+<p>Level: <b id="upgradeLevel">1</b> / 9</p>
+<p>Power: <b id="upgradePower">1x</b></p>
+<p>Harga: <b id="upgradeCost">25</b> Maincoin</p>
+<button class="primary" id="upgradeButton" onclick="buyUpgrade()">Upgrade</button>
+</div>
+
+<div class="upgrade-box">
+<h3>🤖 Auto Click</h3>
+<p class="muted">Aktifkan untuk mendapatkan click otomatis selama halaman game terbuka.</p>
+<p>Status: <b id="autoStatus">OFF</b></p>
+<button class="primary" id="autoButton" onclick="toggleAuto()">Start Auto Click</button>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>📈 Rank Progress</h2>
+<div class="title-row">
+<span id="nextRankText">Menuju Iron</span>
+<span id="progressNumbers">0 / 100</span>
+</div>
+<div class="bar"><div id="rankBar"></div></div>
+</div>
+</section>
+
+<div id="toast"></div>
+
+<script>
+const STORAGE_KEY='clickxing_accounts_v1';
+const SESSION_KEY='clickxing_session_v1';
+const REFRESH_KEY='clickxing_refresh_v1';
+
+const ranks=[
+{name:'Unranked',min:1,cls:'rank-unranked'},
+{name:'Iron',min:100,cls:'rank-iron'},
+{name:'Gold',min:700,cls:'rank-gold'},
+{name:'Emerald',min:1200,cls:'rank-emerald'},
+{name:'Diamond',min:3000,cls:'rank-diamond'},
+{name:'Netherite I',min:7600,cls:'rank-netherite'},
+{name:'Netherite II',min:9300,cls:'rank-netherite'},
+{name:'Netherite III',min:12000,cls:'rank-netherite'},
+{name:'Semi Royale',min:20000,cls:'rank-semi'},
+{name:'Royale',min:50000,cls:'rank-royale'}
+];
+
+let accounts=loadAccounts();
+let currentUser=null;
+let autoTimer=null;
+let authMode='create';
+
+function loadAccounts(){
+try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{}}
+catch(e){return {}}
+}
+
+function saveAccounts(){
+localStorage.setItem(STORAGE_KEY,JSON.stringify(accounts));
+}
+
+function rankInfo(clicks){
+let result=ranks[0];
+for(const rank of ranks){
+if(clicks>=rank.min) result=rank;
+}
+return result;
+}
+
+function nextRank(clicks){
+return ranks.find(r=>clicks<r.min)||null;
+}
+
+function showToast(message){
+const t=document.getElementById('toast');
+t.textContent=message;
+t.style.display='block';
+clearTimeout(showToast.timer);
+showToast.timer=setTimeout(()=>t.style.display='none',2300);
+}
+
+function showPage(id){
+['homePage','authPage','gamePage'].forEach(p=>document.getElementById(p).classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+}
+
+function showAuth(mode){
+authMode=mode;
+$('authTitle').textContent=mode==='create'?'Create Account':'Login';
+$('authDescription').textContent=mode==='create'?'Buat akun CLICKXING kamu.':'Masuk ke akun CLICKXING kamu.';
+$('authSubmit').textContent=mode==='create'?'Create Account':'Login';
+$('usernameInput').value='';
+$('passwordInput').value='';
+showPage('authPage');
+}
+
+function $(id){return document.getElementById(id)}
+
+function hashPassword(password){
+/* Hash sederhana untuk demo lokal, bukan pengamanan akun produksi. */
+let h=2166136261;
+for(let i=0;i<password.length;i++){
+h^=password.charCodeAt(i);
+h=Math.imul(h,16777619);
+}
+return (h>>>0).toString(16);
+}
+
+function submitAuth(){
+const username=$('usernameInput').value.trim();
+const password=$('passwordInput').value;
+
+if(!/^[a-zA-Z0-9_]{3,18}$/.test(username)){
+showToast('Username harus 3–18 karakter: huruf, angka, atau _');
+return;
+}
+if(password.length<4){
+showToast('Password minimal 4 karakter.');
+return;
+}
+
+const key=username.toLowerCase();
+
+if(authMode==='create'){
+if(accounts[key]){
+showToast('Username sudah digunakan!');
+return;
+}
+accounts[key]={
+username:username,
+passwordHash:hashPassword(password),
+clicks:0,
+maincoin:0,
+upgradeLevel:1,
+claimedRanks:[]
+};
+saveAccounts();
+showToast('Akun berhasil dibuat!');
+}else{
+if(!accounts[key]||accounts[key].passwordHash!==hashPassword(password)){
+showToast('Username atau password salah!');
+return;
+}
+}
+
+loginUser(key);
+}
+
+function loginUser(key){
+currentUser=key;
+localStorage.setItem(SESSION_KEY,key);
+$('loginHeader').classList.add('hidden');
+$('createHeader').classList.add('hidden');
+$('logoutHeader').classList.remove('hidden');
+updateGame();
+showPage('gamePage');
+}
+
+function logout(){
+stopAuto();
+currentUser=null;
+localStorage.removeItem(SESSION_KEY);
+$('loginHeader').classList.remove('hidden');
+$('createHeader').classList.remove('hidden');
+$('logoutHeader').classList.add('hidden');
+renderLeaderboard();
+showPage('homePage');
+}
+
+function goHome(){
+renderLeaderboard();
+showPage('homePage');
+}
+
+function getUser(){
+return currentUser?accounts[currentUser]:null;
+}
+
+function saveProgress(){
+saveAccounts();
+renderLeaderboard();
+}
+
+function upgradePower(){
+return getUser().upgradeLevel;
+}
+
+function upgradePrice(){
+return getUser().upgradeLevel*25;
+}
+
+function rankRewards(user){
+if(!user.claimedRanks)user.claimedRanks=[];
+for(const rank of ranks.slice(1)){
+if(user.clicks>=rank.min&&!user.claimedRanks.includes(rank.name)){
+user.claimedRanks.push(rank.name);
+user.maincoin+=rank.min>=50000?1000:rank.min>=20000?500:rank.min>=7600?200:rank.min>=3000?100:rank.min>=1200?50:25;
+showToast('Rank baru: '+rank.name+'! Maincoin diperoleh!');
+}
+}
+}
+
+function addClicks(amount){
+const user=getUser();
+if(!user)return;
+const previousRank=rankInfo(user.clicks).name;
+user.clicks+=amount;
+rankRewards(user);
+const newRank=rankInfo(user.clicks).name;
+if(previousRank!==newRank){
+$('clickMessage').textContent='Rank Up! '+newRank+'!';
+}
+saveProgress();
+updateGame();
+}
+
+function manualClick(){
+addClicks(upgradePower());
+}
+
+function buyUpgrade(){
+const user=getUser();
+if(!user)return;
+if(user.upgradeLevel>=9){
+showToast('Multiple Click sudah maksimal!');
+return;
+}
+const cost=upgradePrice();
+if(user.maincoin<cost){
+showToast('Maincoin tidak cukup!');
+return;
+}
+user.maincoin-=cost;
+user.upgradeLevel++;
+saveProgress();
+updateGame();
+showToast('Upgrade berhasil! Power sekarang '+user.upgradeLevel+'x');
+}
+
+function toggleAuto(){
+if(autoTimer){
+stopAuto();
+return;
+}
+autoTimer=setInterval(()=>addClicks(upgradePower()),250);
+$('autoButton').textContent='Stop Auto Click';
+$('autoStatus').textContent='ON';
+$('autoStatus').style.color='#61e6a5';
+}
+
+function stopAuto(){
+if(autoTimer){
+clearInterval(autoTimer);
+autoTimer=null;
+}
+if($('autoButton')){
+$('autoButton').textContent='Start Auto Click';
+$('autoStatus').textContent='OFF';
+$('autoStatus').style.color='';
+}
+}
+
+function updateGame(){
+const user=getUser();
+if(!user)return;
+$('playerName').textContent=user.username;
+$('totalClicks').textContent=user.clicks.toLocaleString('en-US');
+$('coins').textContent=user.maincoin.toLocaleString('en-US');
+const rank=rankInfo(user.clicks);
+$('currentRank').textContent=rank.name;
+$('currentRank').className='rank '+rank.cls;
+$('clickPower').textContent=user.upgradeLevel;
+$('upgradeLevel').textContent=user.upgradeLevel;
+$('upgradePower').textContent=user.upgradeLevel+'x';
+$('upgradeCost').textContent=user.upgradeLevel>=9?'MAX':upgradePrice();
+$('upgradeButton').disabled=user.upgradeLevel>=9;
+$('upgradeButton').textContent=user.upgradeLevel>=9?'MAX LEVEL':'Upgrade';
+
+const next=nextRank(user.clicks);
+if(next){
+const previous=ranks[ranks.indexOf(next)-1];
+const start=previous?previous.min:1;
+const progress=Math.max(0,user.clicks-start);
+const required=next.min-start;
+$('nextRankText').textContent='Menuju '+next.name;
+$('progressNumbers').textContent=user.clicks.toLocaleString()+' / '+next.min.toLocaleString();
+$('rankBar').style.width=Math.min(100,progress/required*100)+'%';
+}else{
+$('nextRankText').textContent='🏆 RANK TERTINGGI: ROYALE';
+$('progressNumbers').textContent=user.clicks.toLocaleString()+' clicks';
+$('rankBar').style.width='100%';
+}
+}
+
+function renderLeaderboard(){
+const rows=Object.values(accounts)
+.sort((a,b)=>b.clicks-a.clicks||a.username.localeCompare(b.username))
+.slice(0,50);
+const tbody=$('leaderRows');
+tbody.innerHTML='';
+
+if(!rows.length){
+tbody.innerHTML='<tr><td colspan="4" class="muted">Belum ada akun. Jadilah pemain pertama!</td></tr>';
+return;
+}
+
+rows.forEach((player,index)=>{
+const rank=rankInfo(player.clicks);
+const tr=document.createElement('tr');
+const pos=document.createElement('td');
+const name=document.createElement('td');
+const rankCell=document.createElement('td');
+const clicks=document.createElement('td');
+pos.textContent=index+1;
+name.textContent=player.username;
+rankCell.textContent=rank.name;
+rankCell.className='rank '+rank.cls;
+clicks.textContent=player.clicks.toLocaleString('en-US');
+tr.append(pos,name,rankCell,clicks);
+tbody.appendChild(tr);
+});
+}
+
+function refreshLeaderboard(){
+renderLeaderboard();
+localStorage.setItem(REFRESH_KEY,Date.now().toString());
+$('refreshText').textContent='Leaderboard diperbarui: '+new Date().toLocaleTimeString();
+}
+
+function checkLeaderboardRefresh(){
+const last=Number(localStorage.getItem(REFRESH_KEY)||0);
+const threeHours=3*60*60*1000;
+if(!last||Date.now()-last>=threeHours){
+refreshLeaderboard();
+}else{
+renderLeaderboard();
+const remaining=threeHours-(Date.now()-last);
+const hours=Math.floor(remaining/3600000);
+const minutes=Math.floor((remaining%3600000)/60000);
+$('refreshText').textContent='Refresh berikutnya dalam '+hours+'j '+minutes+'m';
+}
+}
+
+function init(){
+checkLeaderboardRefresh();
+const saved=localStorage.getItem(SESSION_KEY);
+if(saved&&accounts[saved]){
+loginUser(saved);
+}else{
+showPage('homePage');
+}
+}
+
+setInterval(()=>{
+const last=Number(localStorage.getItem(REFRESH_KEY)||0);
+if(Date.now()-last>=3*60*60*1000){
+refreshLeaderboard();
+}
+},30000);
+
+window.addEventListener('beforeunload',stopAuto);
+init();
+
+const CLOUD_URL='https://server-clickxing-default-rtdb.asia-southeast1.firebasedatabase.app/';
+</script>
+</body>
+</html>
